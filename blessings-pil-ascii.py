@@ -16,7 +16,7 @@ print (t.enter_fullscreen)
 #Config constants. To be shipped to a config file.
 imgdir='testimgs/'
 sleeptime=20
-charrate = 0.001
+charrate = 0.0001
 displaytype = 'columns'
 
 #inbuilt consts
@@ -62,7 +62,10 @@ def renderPixel(colour):
 def renderImage(img):
     '''use PIL to render and reduce an image to the screen size.
     It will return a list of tuples of the form (y,x,str) where y is the row, x is the column and the str is the representation of the pixel there.'''
-    im=Image.open(img)
+    try:
+        im=Image.open(img)
+    except:
+        return []
     im=im.resize((t.width, t.height),Image.BILINEAR)
     ilist=[]
     for y in range(0,im.size[1]):
@@ -90,13 +93,14 @@ def nPrint(lst,slp=0,disptype='none'):
     for n, m, x in lst:
         print(t.move(n,m)+x,end='')
         time.sleep(slp)
-        sys.stdout.flush()
+        if slp>0:
+            sys.stdout.flush()
     print (t.move(0,0))
 
 if imgdir[-1]!='/':imgdir=imgdir+'/'
-images = glob.glob(imgdir+'*.[gjp][inp][fg]')
 
 while True:
+    images = glob.glob(imgdir+'*.[gjp][inp][fg]')
     for img in images:
         nPrint(renderImage(img),charrate,displaytype)
         time.sleep(sleeptime)
