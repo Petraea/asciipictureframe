@@ -2,7 +2,6 @@ from __future__ import print_function
 from blessings import Terminal
 from PIL import Image
 import random
-import operator
 from bisect import bisect
 import glob
 import time
@@ -18,6 +17,7 @@ imgdir='testimgs/'
 sleeptime=20
 charrate = 0.0001
 displaytype = 'columns'
+scalingmax = 0.7
 
 #inbuilt consts
 colors = {'black':(0,0,0),'red':(1,0,0),'green':(0,1,0),'yellow':(1,1,0),'blue':(0,0,1),'magenta':(1,0,1),'cyan':(0,1,1),'white':(1,1,1)}
@@ -64,9 +64,20 @@ def renderImage(img):
     It will return a list of tuples of the form (y,x,str) where y is the row, x is the column and the str is the representation of the pixel there.'''
     try:
         im=Image.open(img)
+        scratio = t.width/t.height
+        imratio = im.size[0]/im.size[1]
+        if imratio/scratio>scalingmax or scratio/imratio>scalingmax: #Similar, distort
+            new_w = t.width
+            new_h = t.height
+        elif imratio/scratio<scalingmax: #Too dissimilar, image is too wide
+            new_w = t.width
+            new_h = int(float(t.width/im.size[0])*t.height)
+        elif scratio/imratio<scalingmax: #Too dissimilar, image is too tall
+            new_w = int(float(t.height/im.size[1])*t.width)
+            new_h = t.height
+        im=im.resize((t.width, t.height),Image.BILINEAR)
     except:
         return []
-    im=im.resize((t.width, t.height),Image.BILINEAR)
     ilist=[]
     for y in range(0,im.size[1]):
         for x in range(0,im.size[0]):
@@ -86,10 +97,22 @@ def nPrint(lst,slp=0,disptype='none'):
     '''A print function that is capable of printing to the terminal with different styles.'''
     if disptype == 'random':
         random.shuffle(lst)
-    if disptype == 'columns':
-        lst.sort(key=operator.itemgetter(1))
-    if disptype == 'rows':
-        lst.sort(key=operator.itemgetter(0))
+    if disptype == 'left':
+        lst.sort(key=lambda x: x[1])
+    if disptype == 'right':
+        lst.sort(key=lambda x: x[1],reverse=True)
+    if disptype == 'top':
+        lst.sort(key=lambda x: x[0])
+    if disptype == 'bottom':
+        lst.sort(key=lambda x: x[0],reverse=True)
+    if disptype == 'top-left':
+        lst.sort(key=lambda x: x[0]+x[1])
+    if disptype == 'top-right':
+        lst.sort(key=lambda x: x[0]-x[1])
+    if disptype == 'bottom-right':
+        lst.sort(key=lambda x: x[0]+x[1],reverse=True)
+    if disptype == 'bottom-left':
+        lst.sort(key=lambda x: x[0]-x[1],reverse=True)
     for n, m, x in lst:
         print(t.move(n,m)+x,end='')
         time.sleep(slp)
@@ -102,5 +125,6 @@ if imgdir[-1]!='/':imgdir=imgdir+'/'
 while True:
     images = glob.glob(imgdir+'*.[gjp][inp][fg]')
     for img in images:
+        displaytype = random.choice(['left','right','top','bottom','top-left','top-right','bottom-left','bottom-right','random'])
         nPrint(renderImage(img),charrate,displaytype)
         time.sleep(sleeptime)
