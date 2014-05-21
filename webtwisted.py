@@ -89,7 +89,6 @@ class BlessingsASCII():
         cmag['black']=255-sum([cmag[x]*self.colorscale[x] for x in cmag])/self.colorscale['black']
         #Find out which colour is dominant and which is second (dom = background, 2nd = foreground)
         topcolors=sorted(cmag, key=cmag.get,reverse=True)
-        sys.stderr.write(str(cmag)+'\n')
         bg = topcolors[0]
         fg = topcolors[1]
 
@@ -102,26 +101,34 @@ class BlessingsASCII():
         It will return a list of tuples of the form (y,x,str) where y is the row, x is the column and the str is the representation of the pixel there.'''
         try:
             im=Image.open(img)
-            im.load()
             im.convert('RGB')
             scratio = float(t.width)/t.height
             imratio = float(im.size[0])/im.size[1]
             if imratio/scratio<self.scalingmax: #Too dissimilar, image is too wide
                 new_w = int(t.width*imratio/scratio)
                 new_h = t.height
-                fg=im.resize((new_w, new_h),Image.BILINEAR)
-                im = Image.new("RGB",(t.width,t.height), (255,255,255))
-                im.paste(fg,(int((t.width-new_w)/2),int((t.height-new_h)/2)))
             elif scratio/imratio<self.scalingmax: #Too dissimilar, image is too tall
                 new_w = t.width
                 new_h = int(t.height*scratio/imratio)
-                fg=im.resize((new_w, new_h),Image.BILINEAR)
-                im = Image.new("RGB",(t.width,t.height), (255,255,255))
-                im.paste(fg,(int((t.width-new_w)/2),int((t.height-new_h)/2)))
             else: #Similar, distort
                 new_w = t.width
                 new_h = t.height
-                im=im.resize((new_w, new_h),Image.BILINEAR)
+            fg=im.resize((new_w, new_h),Image.BILINEAR)
+            pixels = fg.load()
+            edge = (0,0,0,0)
+            for x in range(fg.size[0]):
+                for y in range(fg.size[1]):
+                    if x == 0 or x == fg.size[0]-1 or y == 0 or y == fg.size[1]-1:
+                        c = pixels[x,y]
+                        if len(c)==1:
+                            c = (c,c,c)
+                        edge = edge[0]+1,edge[1]+c[0],edge[2]+c[1],edge[3]+c[2]
+            edgecol = (int(float(edge[1])/edge[0]),
+                       int(float(edge[2])/edge[0]),
+                       int(float(edge[3])/edge[0]))
+            sys.stderr.write(str(edge)+'\n')
+            im = Image.new("RGB",(t.width,t.height), edgecol)
+            im.paste(fg,(int((t.width-new_w)/2),int((t.height-new_h)/2)))
         except:
             return []
         ilist=[]
@@ -171,7 +178,6 @@ class BlessingsASCII():
             for type in acceptablefiletypes:
                 self.images.extend(glob.glob(self.imgdir+'*.'+type))
         r = random.choice(range(len(self.images)))
-        sys.stderr.write(self.images[r]+'\n')
         self.nPrint(self.renderImage(self.images.pop(r)),self.charrate,random.choice(self.displaytype))
 
 #Used to run frontend operations. curses-printing isn't thread-safe!
