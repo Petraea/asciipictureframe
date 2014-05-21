@@ -126,7 +126,6 @@ class BlessingsASCII():
             edgecol = (int(float(edge[1])/edge[0]),
                        int(float(edge[2])/edge[0]),
                        int(float(edge[3])/edge[0]))
-            sys.stderr.write(str(edge)+'\n')
             im = Image.new("RGB",(t.width,t.height), edgecol)
             im.paste(fg,(int((t.width-new_w)/2),int((t.height-new_h)/2)))
         except:
