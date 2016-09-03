@@ -12,7 +12,7 @@ print (t.hide_cursor)
 print (t.enter_fullscreen)
 
 acceptablefiletypes=['jpg','gif','png','jpeg']
-imgdir='testimgs'
+imgdir='../testimgs'
 q = Queue(t.width*t.height)
 cacheDims=(t.width*t.height)
 scaledImages={}
@@ -53,7 +53,7 @@ def scaleImage(path):
             for y in range(img.size[1]):
                 if x == 0 or x == img.size[0]-1 or y == 0 or y == img.size[1]-1:
                     c = pixels[x,y]
-                    if len(c)==1:
+                    if isinstance(c,int):
                         c = (c,c,c)
                     edge = edge[0]+1,edge[1]+c[0],edge[2]+c[1],edge[3]+c[2]
         edgecol = (int(float(edge[1])/edge[0]),
